@@ -1,20 +1,31 @@
-import React from "react"
+import { useState } from "react"
+import { clsx } from "clsx"
 import { languages } from "./languages"
 
 /**
- * Goal: Build out the main parts of our app
+ * Goal: Allow the user to start guessing the letters
  * 
- * Challenge: 
- * 1. Save a "currentWord" in state. Initialize as "react".
- * 2. Map over the letters of the word (you'll need to turn 
- *    the string into an array of letters first) and display
- *    each one as a <span>. Capitalize the letters when
- *    displaying them.
- * 3. Style to look like the design. You can get the underline 
- *    effect on the box using `border-bottom`.
+ * Challenge: Update the keyboard when a letter is right
+ * or wrong.
+ * 
+ * Bonus: use the `clsx` package to easily add conditional 
+ * classNames to the keys of the keyboard. Check the docs 
+ * to learn how to use it 📖
  */
 
 export default function AssemblyEndgame() {
+    const [currentWord, setCurrentWord] = useState("react")
+    const [guessedLetters, setGuessedLetters] = useState([])
+
+    const alphabet = "abcdefghijklmnopqrstuvwxyz"
+
+    function addGuessedLetter(letter) {
+        setGuessedLetters(prevLetters =>
+            prevLetters.includes(letter) ?
+                prevLetters :
+                [...prevLetters, letter]
+        )
+    }
 
     const languageElements = languages.map(lang => {
         const styles = {
@@ -22,8 +33,8 @@ export default function AssemblyEndgame() {
             color: lang.color
         }
         return (
-            <span 
-                className="chip" 
+            <span
+                className="chip"
                 style={styles}
                 key={lang.name}
             >
@@ -31,7 +42,33 @@ export default function AssemblyEndgame() {
             </span>
         )
     })
-    
+
+    const letterElements = currentWord.split("").map((letter, index) => (
+        <span key={index}>{letter.toUpperCase()}</span>
+    ))
+
+    const keyboardElements = alphabet.split("").map(letter => {
+        const isGuessed = guessedLetters.includes(letter)
+        const isCorrect = isGuessed && currentWord.includes(letter)
+        const isWrong = isGuessed && !currentWord.includes(letter)
+        const className = clsx({
+            correct: isCorrect,
+            wrong: isWrong
+        })
+        
+        console.log(className)
+        
+        return (
+            <button
+                className={className}
+                key={letter}
+                onClick={() => addGuessedLetter(letter)}
+            >
+                {letter.toUpperCase()}
+            </button>
+        )
+    })
+
     return (
         <main>
             <header>
@@ -46,6 +83,13 @@ export default function AssemblyEndgame() {
             <section className="language-chips">
                 {languageElements}
             </section>
+            <section className="word">
+                {letterElements}
+            </section>
+            <section className="keyboard">
+                {keyboardElements}
+            </section>
+            <button className="new-game">New Game</button>
         </main>
     )
 }
