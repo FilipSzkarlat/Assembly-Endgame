@@ -3,20 +3,32 @@ import { clsx } from "clsx"
 import { languages } from "./languages"
 
 /**
- * Goal: Allow the user to start guessing the letters
+ * Goal: Add in the incorrect guesses mechanism to the game
  * 
- * Challenge: Update the keyboard when a letter is right
- * or wrong.
+ * Challenge:
+ * Conditionally render either the "won" or "lost" statuses
+ * from the design, both the text and the styles, based on the
+ * new derived variables.
  * 
- * Bonus: use the `clsx` package to easily add conditional 
- * classNames to the keys of the keyboard. Check the docs 
- * to learn how to use it 📖
+ * Note: We always want the surrounding `section` to be rendered,
+ * so only change the content inside that section. Otherwise the
+ * content on the page would jump around a bit too much.
  */
 
 export default function AssemblyEndgame() {
+    // State values
     const [currentWord, setCurrentWord] = useState("react")
     const [guessedLetters, setGuessedLetters] = useState([])
 
+    // Derived values
+    const wrongGuessCount =
+        guessedLetters.filter(letter => !currentWord.includes(letter)).length
+    const isGameWon =
+        currentWord.split("").every(letter => guessedLetters.includes(letter))
+    const isGameLost = wrongGuessCount >= languages.length - 1
+    const isGameOver = isGameWon || isGameLost
+
+    // Static values
     const alphabet = "abcdefghijklmnopqrstuvwxyz"
 
     function addGuessedLetter(letter) {
@@ -27,14 +39,16 @@ export default function AssemblyEndgame() {
         )
     }
 
-    const languageElements = languages.map(lang => {
+    const languageElements = languages.map((lang, index) => {
+        const isLanguageLost = index < wrongGuessCount
         const styles = {
             backgroundColor: lang.backgroundColor,
             color: lang.color
         }
+        const className = clsx("chip", isLanguageLost && "lost")
         return (
             <span
-                className="chip"
+                className={className}
                 style={styles}
                 key={lang.name}
             >
@@ -44,7 +58,9 @@ export default function AssemblyEndgame() {
     })
 
     const letterElements = currentWord.split("").map((letter, index) => (
-        <span key={index}>{letter.toUpperCase()}</span>
+        <span key={index}>
+            {guessedLetters.includes(letter) ? letter.toUpperCase() : ""}
+        </span>
     ))
 
     const keyboardElements = alphabet.split("").map(letter => {
@@ -55,9 +71,7 @@ export default function AssemblyEndgame() {
             correct: isCorrect,
             wrong: isWrong
         })
-        
-        console.log(className)
-        
+
         return (
             <button
                 className={className}
@@ -68,6 +82,11 @@ export default function AssemblyEndgame() {
             </button>
         )
     })
+    
+    const gameStatusClass = clsx("game-status", {
+        won: isGameWon,
+        lost: isGameLost
+    })
 
     return (
         <main>
@@ -76,20 +95,39 @@ export default function AssemblyEndgame() {
                 <p>Guess the word within 8 attempts to keep the
                 programming world safe from Assembly!</p>
             </header>
-            <section className="game-status">
-                <h2>You win!</h2>
-                <p>Well done! 🎉</p>
+
+            <section className={gameStatusClass}>
+                {isGameOver ? (
+                    isGameWon ? (
+                        <>
+                            <h2>You win!</h2>
+                            <p>Well done! 🎉</p>
+                        </>
+                    ) : (
+                        <>
+                            <h2>Game over!</h2>
+                            <p>You lose! Better start learning Assembly 😭</p>
+                        </>
+                    )
+                ) : (
+                        null
+                    )
+                }
             </section>
+
             <section className="language-chips">
                 {languageElements}
             </section>
+
             <section className="word">
                 {letterElements}
             </section>
+
             <section className="keyboard">
                 {keyboardElements}
             </section>
-            <button className="new-game">New Game</button>
+
+            {isGameOver && <button className="new-game">New Game</button>}
         </main>
     )
 }
