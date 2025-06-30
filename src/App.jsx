@@ -10,8 +10,11 @@ import { getFarewellText, getRandomWord } from "./utils"
  * ✅ Disable the keyboard when the game is over
  * ✅ Fix a11y issues
  * ✅ Choose a random word from a list of words
- * - Make the New Game button reset the game
+ * ✅ Make the New Game button reset the game
+ * - Reveal what the word was if the user loses the game
  * - Confetti drop when the user wins
+ * 
+ * Challenge: Make the New Game button reset the game
  */
 
 export default function AssemblyEndgame() {
@@ -39,6 +42,11 @@ export default function AssemblyEndgame() {
                 prevLetters :
                 [...prevLetters, letter]
         )
+    }
+    
+    function startNewGame() {
+        setCurrentWord(getRandomWord())
+        setGuessedLetters([])
     }
 
     const languageElements = languages.map((lang, index) => {
@@ -170,7 +178,11 @@ export default function AssemblyEndgame() {
                 {keyboardElements}
             </section>
 
-            {isGameOver && <button className="new-game">New Game</button>}
+            {isGameOver && 
+                <button 
+                    className="new-game" 
+                    onClick={startNewGame}
+                >New Game</button>}
         </main>
     )
 }
