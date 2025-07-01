@@ -13,7 +13,7 @@ import Confetti from "react-confetti"
  * ✅ Choose a random word from a list of words
  * ✅ Make the New Game button reset the game
  * ✅ Reveal what the word was if the user loses the game
- * - Confetti drop when the user wins
+ * ✅ Confetti drop when the user wins
  * 
  * Challenge: 🎊🎊🎊🎊🎊
  */
@@ -140,6 +140,13 @@ export default function AssemblyEndgame() {
 
     return (
         <main>
+            {
+                isGameWon && 
+                    <Confetti
+                        recycle={false}
+                        numberOfPieces={1000}
+                    />
+            }
             <header>
                 <h1>Assembly: Endgame</h1>
                 <p>Guess the word within 8 attempts to keep the
