@@ -33,6 +33,24 @@ header > p {
     color: #8E8E8E;
 }
 
+section.timer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 350px;
+    font-size: 2.5em;
+    background-color: #323232;
+    border-radius: 4px;
+    margin-top: .5em;
+}
+
+section.timer > p {
+    margin: 0;
+    padding: 10px;
+    color: #F9F4DA;
+}
+
 section.game-status {
     display: flex;
     flex-direction: column;

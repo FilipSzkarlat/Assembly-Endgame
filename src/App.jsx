@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { clsx } from "clsx"
 import { languages } from "./languages"
 import { getFarewellText, getRandomWord } from "./utils"
@@ -7,21 +7,16 @@ import Confetti from "react-confetti"
 /**
  * Backlog:
  * 
- * ✅ Farewell messages in status section
- * ✅ Disable the keyboard when the game is over
- * ✅ Fix a11y issues
- * ✅ Choose a random word from a list of words
- * ✅ Make the New Game button reset the game
- * ✅ Reveal what the word was if the user loses the game
- * ✅ Confetti drop when the user wins
+ * ✅ no backlog so far
  * 
- * Challenge: 🎊🎊🎊🎊🎊
  */
 
 export default function AssemblyEndgame() {
     // State values
     const [currentWord, setCurrentWord] = useState(() => getRandomWord())
     const [guessedLetters, setGuessedLetters] = useState([])
+    const [timeLeft, setTimeLeft] = useState(45)
+    const [gameStatus, setGameStatus] = useState(null)
 
     // Derived values
     const numGuessesLeft = languages.length - 1
@@ -29,10 +24,11 @@ export default function AssemblyEndgame() {
         guessedLetters.filter(letter => !currentWord.includes(letter)).length
     const isGameWon =
         currentWord.split("").every(letter => guessedLetters.includes(letter))
-    const isGameLost = wrongGuessCount >= numGuessesLeft
-    const isGameOver = isGameWon || isGameLost
+    const isGameLost = wrongGuessCount >= numGuessesLeft || timeLeft === 0
+    const isGameOver = isGameLost || isGameWon
     const lastGuessedLetter = guessedLetters[guessedLetters.length - 1]
     const isLastGuessIncorrect = lastGuessedLetter && !currentWord.includes(lastGuessedLetter)
+    const timerOn = guessedLetters.length > 0 && !isGameOver
 
     // Static values
     const alphabet = "abcdefghijklmnopqrstuvwxyz"
@@ -69,7 +65,7 @@ export default function AssemblyEndgame() {
     })
 
     const letterElements = currentWord.split("").map((letter, index) => {
-        const shouldRevealLetter = isGameLost || guessedLetters.includes(letter)
+        const shouldRevealLetter = timeLeft === 0 || isGameLost || guessedLetters.includes(letter)
         const letterClassName = clsx(
             isGameLost && !guessedLetters.includes(letter) && "missed-letter"
         )
@@ -105,7 +101,7 @@ export default function AssemblyEndgame() {
 
     const gameStatusClass = clsx("game-status", {
         won: isGameWon,
-        lost: isGameLost,
+        lost: isGameLost || timeLeft === 0,
         farewell: !isGameOver && isLastGuessIncorrect
     })
 
@@ -118,14 +114,15 @@ export default function AssemblyEndgame() {
             )
         }
 
-        if (isGameWon) {
+        if (timeLeft === 0) {
             return (
                 <>
-                    <h2>You win!</h2>
-                    <p>Well done! 🎉</p>
+                    <h2>Times out!</h2>
+                    <p>You lose! Next time try to be faster 😭</p>
                 </>
             )
         }
+
         if (isGameLost) {
             return (
                 <>
@@ -135,13 +132,52 @@ export default function AssemblyEndgame() {
             )
         }
 
+        if (isGameWon) {
+            return (
+                <>
+                    <h2>You win!</h2>
+                    <p>Well done! 🎉</p>
+                </>
+            )
+        }
+
         return null
     }
+
+    useEffect(() => {
+        setGameStatus(renderGameStatus())
+    }, [wrongGuessCount, isGameWon, isGameLost, lastGuessedLetter])
+
+    // Start timer when game starts or resets
+    useEffect(() => {
+        if (isGameOver) return
+        setTimeLeft(45)
+        const interval = setInterval(() => {
+            if (timerOn && timeLeft > 0){
+                setTimeLeft(prev => {
+                    if (prev <= 1) {
+                        clearInterval(interval)
+                        return 0
+                    }
+                    return prev - 1
+                })
+            }
+        }, 1000)
+
+        return () => clearInterval(interval)
+    }, [timerOn, isGameOver])
+
+    // End game if timer runs out
+    useEffect(() => {
+        if (timeLeft === 0 && !isGameOver) {
+            setGuessedLetters(prev => [...prev, "timeout"])
+        }
+    }, [timeLeft, isGameOver])
 
     return (
         <main>
             {
-                isGameWon && 
+                (isGameWon && !isGameLost) && 
                     <Confetti
                         recycle={false}
                         numberOfPieces={1000}
@@ -153,12 +189,16 @@ export default function AssemblyEndgame() {
                 programming world safe from Assembly!</p>
             </header>
 
+            <section className="timer">
+                <p>{timeLeft}s</p>
+            </section>
+
             <section
                 aria-live="polite"
                 role="status"
                 className={gameStatusClass}
             >
-                {renderGameStatus()}
+                {gameStatus}
             </section>
 
             <section className="language-chips">
@@ -185,7 +225,6 @@ export default function AssemblyEndgame() {
                 <p>Current word: {currentWord.split("").map(letter =>
                     guessedLetters.includes(letter) ? letter + "." : "blank.")
                     .join(" ")}</p>
-
             </section>
 
             <section className="keyboard">
